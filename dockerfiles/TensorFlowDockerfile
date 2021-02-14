@@ -5,9 +5,14 @@ FROM ${REGISTRY}/${RPC_VERSION}-rpc:${CODE_VERSION}
 
 LABEL maintainer="Dan Crankshaw <dscrankshaw@gmail.com>"
 
-RUN pip install -q tensorflow==1.13.*
+RUN pip install -q tensorflow==1.15.0
+RUN pip install -q tensorflow-gpu==1.15.0
+RUN pip install -q opencv-python
 
 COPY containers/python/tf_container.py containers/python/container_entry.sh /container/
+
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 
 CMD ["/container/container_entry.sh", "tensorflow-container", "/container/tf_container.py"]
 

@@ -69,6 +69,7 @@ class Fluentd(object):
             },
             user='root',
             labels=fluentd_labels,
+            runtime="nvidia",
             **extra_container_kwargs)
 
     def _get_labels(self, clipper_common_labels):

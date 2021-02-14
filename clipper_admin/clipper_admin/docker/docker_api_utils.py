@@ -62,4 +62,5 @@ def run_container(docker_client, image, cmd=None, name=None, ports=None,
         volumes=volumes,
         user=user,
         log_config=log_config,
+        runtime="nvidia",
         **extra_container_kwargs)

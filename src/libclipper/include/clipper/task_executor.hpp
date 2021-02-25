@@ -479,26 +479,16 @@ class TaskExecutor {
       auto model_queue_entry = model_queues_.find(t.model_);
 
       if (model_queue_entry != model_queues_.end()) {
-        auto cache_result = cache_->fetch(t.model_, t.input_);
 
-        if (cache_result.isReady()) {
-          output_futures.push_back(std::move(cache_result));
-          boost::shared_lock<boost::shared_mutex> model_metrics_lock(
-              model_metrics_mutex_);
-          auto cur_model_metric_entry = model_metrics_.find(t.model_);
-          if (cur_model_metric_entry != model_metrics_.end()) {
-            auto cur_model_metric = cur_model_metric_entry->second;
-            cur_model_metric.cache_hit_ratio_->increment(1, 1);
-          }
-        }
-
-        else if (active_containers_->get_replicas_for_model(t.model_).size() ==
+        if (active_containers_->get_replicas_for_model(t.model_).size() ==
                  0) {
           log_error_formatted(LOGGING_TAG_TASK_EXECUTOR,
                               "No active model containers for model: {} : {}",
                               t.model_.get_name(), t.model_.get_id());
         } else {
-          output_futures.push_back(std::move(cache_result));
+          folly::Promise<Output> new_promise;
+          folly::Future<Output> new_future = new_promise.getFuture();
+          output_futures.push_back(std::move(new_future));
           t.recv_time_ = std::chrono::system_clock::now();
           model_queue_entry->second->add_task(t);
           log_info_formatted(LOGGING_TAG_TASK_EXECUTOR,
@@ -786,11 +776,7 @@ class TaskExecutor {
       }
       for (size_t batch_num = 0; batch_num < batch_size; ++batch_num) {
         InflightMessage completed_msg = keys[batch_num];
-        if (!completed_msg.discard_result_) {
-          cache_->put(completed_msg.model_, completed_msg.input_,
-                      Output{parsed_response.outputs_[batch_num],
-                             {completed_msg.model_}});
-        }
+
         auto task_latency = current_time - completed_msg.send_time_;
         long task_latency_micros =
             std::chrono::duration_cast<std::chrono::microseconds>(task_latency)

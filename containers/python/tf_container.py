@@ -22,6 +22,7 @@ def load_predict_func(file_path):
 
 class TfContainer(rpc.ModelContainerBase):
     def __init__(self, path, input_type):
+        
         self.input_type = rpc.string_to_input_type(input_type)
         modules_folder_path = "{dir}/modules/".format(dir=path)
         sys.path.append(os.path.abspath(modules_folder_path))
@@ -34,21 +35,8 @@ class TfContainer(rpc.ModelContainerBase):
         if (len(frozen_graph_exists) > 0):
             with tf.Graph().as_default() as graph:
                 self.sess = tf.Session(graph=graph)
-                loader.load(self.sess, [tf.saved_model.tag_constants.SERVING],
+                self.meta_graph_def=loader.load(self.sess, [tf.saved_model.tag_constants.SERVING],
                             os.path.join(path, "tfmodel"))
-        else:
-            self.sess = tf.Session(
-                '',
-                tf.Graph(),
-                config=tf.ConfigProto(
-                    allow_soft_placement=True, log_device_placement=True))
-            metagraph_path = glob.glob(os.path.join(path, "tfmodel/*.meta"))[0]
-            checkpoint_path = metagraph_path.split(".meta")[0]
-            with tf.device("/gpu:0"):
-                with self.sess.graph.as_default():
-                    saver = tf.train.import_meta_graph(
-                        metagraph_path, clear_devices=True)
-                    saver.restore(self.sess, checkpoint_path)
 
     def predict_ints(self, inputs):
         preds = self.predict_func(self.sess, inputs)
@@ -67,7 +55,7 @@ class TfContainer(rpc.ModelContainerBase):
         return [str(p) for p in preds]
 
     def predict_strings(self, inputs):
-        preds = self.predict_func(self.sess, inputs)
+        preds = self.predict_func(self.sess,self.meta_graph_def,inputs)
         return [str(p) for p in preds]
 
 

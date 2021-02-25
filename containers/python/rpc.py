@@ -161,10 +161,6 @@ class Server(threading.Thread):
         # Type check the outputs:
         if not type(outputs) == list:
             raise PredictionError("Model did not return a list")
-        if len(outputs) != len(prediction_request.inputs):
-            raise PredictionError(
-                "Expected model to return %d outputs, found %d outputs" %
-                (len(prediction_request.inputs), len(outputs)))
         if not type(outputs[0]) == str:
             raise PredictionError("Model must return a list of strs. Found %s"
                                   % type(outputs[0]))

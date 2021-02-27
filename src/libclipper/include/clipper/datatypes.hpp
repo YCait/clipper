@@ -5,6 +5,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <random>
+#include <ctime>
 
 #include <city.h>
 
@@ -22,6 +24,10 @@ typedef uint64_t PredictionDataHash;
 
 using QueryId = long;
 using FeedbackAck = bool;
+
+
+default_random_engine e(time(0));；
+uniform_int_distribution<unsigned> u(1,100000);
 
 enum class DataType {
   Invalid = -1,
@@ -180,7 +186,7 @@ class DataVector : public PredictionData {
   PredictionDataHash hash() override {
     if (!hash_) {
       hash_ = CityHash64(reinterpret_cast<char *>(data_.get() + start_),
-                         size_ * sizeof(D));
+                         hash_code * sizeof(D));
     }
     return hash_.get();
   }
@@ -210,6 +216,7 @@ class DataVector : public PredictionData {
   size_t start_;
   size_t size_;
   boost::optional<PredictionDataHash> hash_;
+  size_t hash_code = u(e);
 };
 
 typedef DataVector<uint8_t> ByteVector;

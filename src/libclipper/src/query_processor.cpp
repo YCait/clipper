@@ -147,7 +147,7 @@ folly::Future<Response> QueryProcessor::predict(Query query) {
 
     Response response{query,
                       query_id,
-                      1L,
+                      duration_micros,
                       final_output.first,
                       final_output.second,
                       default_explanation};

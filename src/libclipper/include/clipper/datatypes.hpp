@@ -25,9 +25,11 @@ typedef uint64_t PredictionDataHash;
 using QueryId = long;
 using FeedbackAck = bool;
 
-
-default_random_engine e(time(0));；
-uniform_int_distribution<unsigned> u(1,100000);
+namespace {
+using namespace std;
+default_random_engine e(time(0));
+uniform_int_distribution<uint64_t> u(100,10000);
+}
 
 enum class DataType {
   Invalid = -1,
@@ -184,11 +186,11 @@ class DataVector : public PredictionData {
   DataType type() const override { return VectorDataType<D>::type; }
 
   PredictionDataHash hash() override {
-    if (!hash_) {
-      hash_ = CityHash64(reinterpret_cast<char *>(data_.get() + start_),
-                         hash_code * sizeof(D));
-    }
-    return hash_.get();
+    // if (!hash_) {
+    //   hash_ = CityHash64(reinterpret_cast<char *>(data_.get() + start_),
+    //                      hash_code * sizeof(D));
+    // }
+    return hash_code;
   }
 
   size_t start() const override { return start_; }
@@ -216,7 +218,7 @@ class DataVector : public PredictionData {
   size_t start_;
   size_t size_;
   boost::optional<PredictionDataHash> hash_;
-  size_t hash_code = u(e);
+  uint64_t hash_code = u(e);
 };
 
 typedef DataVector<uint8_t> ByteVector;
